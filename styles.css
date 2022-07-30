@@ -57,7 +57,7 @@
     color: #F5FAD7;
     background-color: transparent;
     min-height: 15px;
-    word-break: break-all;
+    word-wrap: break-word;
     text-shadow: 1px 1px 0px #66DE97;
 }
 
@@ -72,7 +72,7 @@
     padding-left: 50px;
     background-color: #33A7C1;
     border-radius: 8px;
-    word-break: break-all;
+    word-wrap: break-word;
     font-weight: 700;
     color: #F5FAD7;
     min-height: 18px;
@@ -86,7 +86,6 @@
     padding-left: 50px;
     background-color: #33A7C1;
     border-radius: 8px;
-    word-break: break-all;
     font-weight: 700;
     color: #F5FAD7;
     min-height: 18px;
