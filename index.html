@@ -50,10 +50,6 @@
             function updateAccessToken(newAccessToken) {
                 access_token = newAccessToken;
             }
-            
-            function receiveDataTest(data) {
-                console.log(data);
-            }
 
             let beginLogin = async () => {
                 try {
@@ -128,7 +124,6 @@
             }
 
             let startChat = async () => {
-                
                 fetch('https://api.7tv.app/v2/emotes/global')
                 .then((response) => response.json())
                 .then((globalEmotes) => {
