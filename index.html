@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quattrocento+Sans:wght@400;700">
+		<link rel="stylesheet" href="styles.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+        <title>Angel Dual Chat</title>
+    </head>
+    <body>
+        <div id="chatlist" class="chatlist">
+		</div>
+		<div id="chatmessagebase" class="chatmessage animate__animated animate__bounceInRight animate__faster" hidden>
+			<div class="chatusericon">
+				<img class="chatuserpic"/>
+			</div>
+			<div class="chatmessageheader">
+				<span class="chatusername">
+
+				</span>
+			</div>
+			<div class="chatmessageinnercenter">
+			</div>
+		</div>
+		<img id="twitchiconbase" class="chattwitchicon" src="twitch_icon.png" hidden/>
+		<img id="youtubeiconbase" class="chatyoutubeicon" src="youtube_icon.png" hidden/>
+		<div id="hiddenemotes" hidden></div>
+        <script>
+            let $ = (id) => {
+                return document.getElementById(id);
+            };
+            let allEmotes = {};
+            let chatId = 0;
+            const CLIENT_ID = "c0d475c5-e16e-47e0-aa04-4af577c2b256";
+            const platforms = ["youtube", "twitch"];
+            let heartbeatTimer;
+
+            let url = window.location;
+
+            let connections = {};
+
+            let access_token = new URLSearchParams(url.search).get('access_token');
+
+            let code = new URLSearchParams(url.search).get('code');
+            let scope = new URLSearchParams(url.search).get('scope');
+            let state = new URLSearchParams(url.search).get('state');
+
+            function updateAccessToken(newAccessToken) {
+                access_token = newAccessToken;
+            }
+
+            let beginLogin = async () => {
+                try {
+                    let newState = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+                    sessionStorage.setItem("state", newState);
+                    window.location.replace(`https://api.restream.io/login?response_type=code&client_id=${CLIENT_ID}&redirect_uri=https://niaarchangel.github.io/&state=${newState}`);
+                }
+                catch (err) {
+                    console.log(err);
+                }
+            };
+            
+            let newChatMessage = (chatMessage, username, profilepic, platform = null) => {
+                let newMessage;
+                let disableExtraLarge = false;
+                let newMessageText;
+                let newEmote;
+                let emoteId = 0;
+                newMessage = $("chatmessagebase").cloneNode(true);
+                newMessage.hidden = false;
+                newMessage.id = "chatmessage_" + chatId;
+                if (platform) {
+                    let platformIcon = $(platform + "iconbase").cloneNode();
+                    platformIcon.hidden = false;
+                    platformIcon.id = "platform_" + chatId;
+                    newMessage.querySelector(".chatusericon").insertBefore(platformIcon, newMessage.querySelector(".chatusericon").firstChild);
+                }
+                newMessage.querySelector(".chatusericon").querySelector(".chatuserpic").src = profilepic;
+                newMessage.querySelector(".chatmessageheader").querySelector(".chatusername").innerText = username;
+                newMessageText = newMessage.querySelector(".chatmessageinnercenter");
+                newMessageText.innerHTML = '';
+                //newMessageText.appendChild(allEmotes[slicedMessage].largeSize.cloneNode());
+
+                let charIndex = 0;
+                let endIndex;
+                let messageSlice;
+                let messageLeft = chatMessage.trim();
+
+                while (charIndex < messageLeft.length) {
+                    if (messageLeft[charIndex] !== " ") {
+                        messageLeft = messageLeft.slice(charIndex);
+                        charIndex = 0;
+                        endIndex = messageLeft.indexOf(" ");
+                        if (endIndex < 0)
+                            endIndex = messageLeft.length;
+                        messageSlice = messageLeft.slice(charIndex, endIndex);
+                        if (messageSlice in allEmotes) {
+                            emoteId++;
+                            newMessageText.appendChild(allEmotes[messageSlice].largeSize.cloneNode());
+                        } else {
+                            disableExtraLarge = true;
+                            newMessageText.innerHTML += messageSlice;
+                        }
+                        charIndex = endIndex;
+                    } else {
+                        newMessageText.innerHTML += "&nbsp";
+                        charIndex++;
+                    }
+                }
+
+                //updates all emoji to normal size if it extra large is disabled or too many emoji
+                if (disableExtraLarge) {
+                    newMessageText.className = "chatmessageinner";
+                    newMessageText.querySelectorAll(".chatemote").forEach((oldEmote) => {
+                        newMessageText.replaceChild(allEmotes[oldEmote.alt].normalSize.cloneNode(), oldEmote);
+                    });
+                }
+                chatId++
+                $("chatlist").insertBefore(newMessage, $("chatlist").firstChild);
+                if ($("chatlist").children.length > 30)
+                    $("chatlist").removeChild($("chatlist").lastChild);
+            }
+
+            let startChat = async () => {
+                
+                fetch('https://api.7tv.app/v2/emotes/global')
+                .then((response) => response.json())
+                .then((globalEmotes) => {
+                    globalEmotes.forEach((emote)=>{
+                        allEmotes[emote.name] = {
+                            normalSize: document.createElement("img"),
+                            largeSize: document.createElement("img"),
+                            hasDoubleSize: emote.width[0] !== emote.width[1],
+                            width: emote.width[0]
+                        };
+                        allEmotes[emote.name].normalSize.src = emote.urls[0][1];
+                        allEmotes[emote.name].largeSize.src = emote.urls[1][1];
+                        $("hiddenemotes").appendChild(allEmotes[emote.name].normalSize);
+                        $("hiddenemotes").appendChild(allEmotes[emote.name].largeSize);
+                    });
+                    fetch('https://api.7tv.app/v2/users/niaarchangel/emotes')
+                    .then((response) => response.json())
+                    .then((channelEmotes) => {
+                        channelEmotes.forEach((emote)=>{
+                            if (emote.name in allEmotes) {
+                                allEmotes[emote.name].normalSize.src = emote.urls[0][1];
+                                allEmotes[emote.name].largeSize.src = emote.urls[1][1];
+                            } else {
+                                allEmotes[emote.name] = {
+                                    normalSize: document.createElement("img"),
+                                    largeSize: document.createElement("img"),
+                                    hasDoubleSize: emote.width[0] !== emote.width[1],
+                                    width: emote.width[0]
+                                };
+                                allEmotes[emote.name].normalSize.src = emote.urls[0][1];
+                                allEmotes[emote.name].normalSize.className = "chatemote";
+                                allEmotes[emote.name].normalSize.alt = emote.name;
+                                allEmotes[emote.name].largeSize.src = emote.urls[1][1];
+                                allEmotes[emote.name].largeSize.className = "chatemote";
+                                allEmotes[emote.name].largeSize.alt = emote.name;
+                                $("hiddenemotes").appendChild(allEmotes[emote.name].normalSize);
+                                $("hiddenemotes").appendChild(allEmotes[emote.name].largeSize);
+                            }
+                        });
+                        const connection = new WebSocket(`wss://chat.api.restream.io/ws?accessToken=${access_token}`);
+                        connection.onmessage = (message) => {
+                            let messageData = JSON.parse(message.data);
+                            console.log(messageData);
+                            switch (messageData.action) {
+                                case "connection_info":
+                                    connections[messageData.payload.connectionIdentifier] = {...messageData.payload, platform_type: platforms.find(platform=>messageData.payload.connectionIdentifier.includes(platform))};
+                                    break;
+                                case "reply_created":
+                                    newChatMessage(messageData.payload.text, "niaarchangel", "nia_icon.png", messageData.payload.connectionIdentifiers.length > 1 ? null : connections[messageData.payload.connectionIdentifiers[0]].platform_type);
+                                    break;
+                                case "event":
+                                    if (!messageData.payload.eventPayload.bot)
+                                        newChatMessage(messageData.payload.eventPayload.text, messageData.payload.eventPayload.author.displayName, messageData.payload.eventPayload.author.avatar, connections[messageData.payload.connectionIdentifier].platform_type);
+                                default:
+                                    break;
+                            }
+                        };
+                    });
+                });
+            };
+
+            if (access_token === null && (code === null || state !== sessionStorage.getItem("state")))
+                beginLogin();
+            else if (access_token !== null) {
+                startChat();
+            }
+		</script>
+    </body>
+</html>

@@ -1,0 +1,98 @@
+* {
+    font-family: "Quattrocento Sans", sans-serif;
+    margin: 0;
+    background-color: #33A7C1;
+    overflow: hidden;
+}
+
+.chatlist {
+    margin-top: 5px 0;
+}
+
+.chatmessage {
+    margin-top: 5px;
+    margin-right: 10px;
+    margin-left: 10px;
+    background-color: #30E8D8;
+    border-radius: 8px;
+    padding: 5px;
+    padding-bottom: 7px;
+}
+
+.chatusericon {
+    width: 100%;
+    height: 58px;
+    background-color: transparent;
+    position: absolute;
+}
+
+.chatyoutubeicon {
+    background-color: transparent;
+    position: absolute;
+    width: 25px;
+    top: 30px;
+    left: 25px;
+}
+
+.chattwitchicon {
+    background-color: transparent;
+    position: absolute;
+    width: 22px;
+    top: 30px;
+    left: 25px;
+}
+
+.chatuserpic {
+    border-radius: 50%;
+    background-color: transparent;
+    width: 40px;
+}
+
+.chatmessageheader {
+    letter-spacing: 1px;
+    padding: 2px;
+    padding-left: 43px;
+    font-size: 120%;
+    font-weight: 700;
+    color: #F5FAD7;
+    background-color: transparent;
+    min-height: 15px;
+    word-break: break-all;
+    text-shadow: 1px 1px 0px #66DE97;
+}
+
+.chatusername {
+    background-color: transparent;
+}
+
+.chatmessageinner {
+    letter-spacing: 1px;
+    padding: 4px;
+    font-size: 115%;
+    padding-left: 50px;
+    background-color: #33A7C1;
+    border-radius: 8px;
+    word-break: break-all;
+    font-weight: 700;
+    color: #F5FAD7;
+    min-height: 18px;
+}
+
+.chatmessageinnercenter {
+    text-align: center;
+    letter-spacing: 1px;
+    padding: 4px;
+    font-size: 115%;
+    padding-left: 50px;
+    background-color: #33A7C1;
+    border-radius: 8px;
+    word-break: break-all;
+    font-weight: 700;
+    color: #F5FAD7;
+    min-height: 18px;
+}
+
+.chatemote {
+    display: inline;
+    vertical-align: middle;
+}
