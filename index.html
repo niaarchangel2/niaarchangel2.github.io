@@ -62,7 +62,7 @@
                 }
             };
             
-            let newChatMessage = (chatMessage, username, profilepic, platform = null) => {
+            let newChatMessage = (chatMessage, username, profilepic, platform) => {
                 let newMessage;
                 let disableExtraLarge = false;
                 let newMessageText;
@@ -122,6 +122,18 @@
                 if ($("chatlist").children.length > 30)
                     $("chatlist").removeChild($("chatlist").lastChild);
             }
+	    
+	    let chatUserFilter = (chatMessage, username, profilepic, platform = null) => {
+		switch (username) {
+			case "KofiStreamBot":
+				if (platform === "twitch")
+					newChatMessage(chatMessage, "Ko-fi", profilepic, null);
+				break;
+			default:
+				newChatMessage(chatMessage, username, profilepic, platform);
+				break;
+		}
+            }
 
             let startChat = async () => {
                 fetch('https://api.7tv.app/v2/emotes/global')
@@ -177,7 +189,7 @@
                                         break;
                                     case "event":
                                         if (!messageData.payload.eventPayload.bot)
-                                            newChatMessage(messageData.payload.eventPayload.text, messageData.payload.eventPayload.author.displayName, messageData.payload.eventPayload.author.avatar, connections[messageData.payload.connectionIdentifier].platform_type);
+                                            chatUserFilter(messageData.payload.eventPayload.text, messageData.payload.eventPayload.author.displayName, messageData.payload.eventPayload.author.avatar, connections[messageData.payload.connectionIdentifier].platform_type);
                                     case "heartbeat":
                                         if (heartbeatTimer) {
                                             clearTimeout(heartbeatTimer);
