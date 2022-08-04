@@ -58,6 +58,7 @@
     background-color: transparent;
     min-height: 15px;
     text-shadow: 1px 1px 0px #66DE97;
+    word-wrap: break-word;
 }
 
 .chatusername {
@@ -74,6 +75,7 @@
     font-weight: 700;
     color: #F5FAD7;
     min-height: 18px;
+    word-wrap: break-word;
 }
 
 .chatmessageinnercenter {
