@@ -123,23 +123,23 @@
                     $("chatlist").removeChild($("chatlist").lastChild);
             }
 	    
-	    let chatUserFilter = (chatMessage, username, profilepic, platform = null) => {
-		switch (username) {
-			case "KofiStreamBot":
-				if (platform === "twitch")
-					newChatMessage(chatMessage, "Ko-fi", profilepic, null);
-				break;
-			default:
-				newChatMessage(chatMessage, username, profilepic, platform);
-				break;
-		}
+            let chatUserFilter = (chatMessage, username, profilepic, platform = null) => {
+                switch (username) {
+                    case "KofiStreamBot":
+                        if (platform === "twitch")
+                            newChatMessage(chatMessage, "Ko-fi", profilepic, null);
+                        break;
+                    default:
+                        newChatMessage(chatMessage, username, profilepic, platform);
+                        break;
+                }
             }
 
             let startChat = async () => {
-                fetch('https://api.7tv.app/v2/emotes/global')
-                .then((response) => response.json())
-                .then((globalEmotes) => {
-                    globalEmotes.forEach((emote)=>{
+                try {
+                    let global7tvEmotes = await fetch('https://api.7tv.app/v2/emotes/global');
+                    global7tvEmotes = await global7tvEmotes.json();
+                    global7tvEmotes.forEach((emote)=>{
                         allEmotes[emote.name] = {
                             normalSize: document.createElement("img"),
                             largeSize: document.createElement("img"),
@@ -151,66 +151,101 @@
                         $("hiddenemotes").appendChild(allEmotes[emote.name].normalSize);
                         $("hiddenemotes").appendChild(allEmotes[emote.name].largeSize);
                     });
-                    fetch('https://api.7tv.app/v2/users/niaarchangel/emotes')
-                    .then((response) => response.json())
-                    .then((channelEmotes) => {
-                        channelEmotes.forEach((emote)=>{
-                            if (emote.name in allEmotes) {
-                                allEmotes[emote.name].normalSize.src = emote.urls[0][1];
-                                allEmotes[emote.name].largeSize.src = emote.urls[1][1];
-                            } else {
-                                allEmotes[emote.name] = {
-                                    normalSize: document.createElement("img"),
-                                    largeSize: document.createElement("img"),
-                                    hasDoubleSize: emote.width[0] !== emote.width[1],
-                                    width: emote.width[0]
-                                };
-                                allEmotes[emote.name].normalSize.src = emote.urls[0][1];
-                                allEmotes[emote.name].normalSize.className = "chatemote";
-                                allEmotes[emote.name].normalSize.alt = emote.name;
-                                allEmotes[emote.name].largeSize.src = emote.urls[1][1];
-                                allEmotes[emote.name].largeSize.className = "chatemote";
-                                allEmotes[emote.name].largeSize.alt = emote.name;
-                                $("hiddenemotes").appendChild(allEmotes[emote.name].normalSize);
-                                $("hiddenemotes").appendChild(allEmotes[emote.name].largeSize);
-                            }
-                        });
-                        function connectToChat() {
-                            let connection = new WebSocket(`wss://chat.api.restream.io/ws?accessToken=${access_token}`);
-                            connection.onmessage = (message) => {
-                                let messageData = JSON.parse(message.data);
-                                console.log(messageData);
-                                switch (messageData.action) {
-                                    case "connection_info":
-                                        connections[messageData.payload.connectionIdentifier] = {...messageData.payload, platform_type: platforms.find(platform=>messageData.payload.connectionIdentifier.includes(platform))};
-                                        break;
-                                    case "reply_created":
-                                        newChatMessage(messageData.payload.text, "niaarchangel", "nia_icon.png", messageData.payload.connectionIdentifiers.length > 1 ? null : connections[messageData.payload.connectionIdentifiers[0]].platform_type);
-                                        break;
-                                    case "event":
-                                        if (!messageData.payload.eventPayload.bot)
-                                            chatUserFilter(messageData.payload.eventPayload.text, messageData.payload.eventPayload.author.displayName, messageData.payload.eventPayload.author.avatar, connections[messageData.payload.connectionIdentifier].platform_type);
-                                    case "heartbeat":
-                                        if (heartbeatTimer) {
-                                            clearTimeout(heartbeatTimer);
-                                            heartbeatTimer = setTimeout(()=>{
-                                                heartbeatTimer = null
-                                                connection.close();
-                                                connectToChat();
-                                            }, 60000);
-                                        }
-                                        break;
-                                    case "connection_closed":
-                                        newChatMessage("Connection lost: " + messageData.payload.reason, "Nia Bot", "nia_bot_icon.png");
-                                        break;
-                                    default:
-                                        break;
-                                }
+                } catch (err) {
+                    console.log("Failed at global7tvEmotes")
+                }
+                try {
+                    let kima7tvEmotes = await fetch('https://api.7tv.app/v2/users/kima44/emotes');
+                    kima7tvEmotes = await kima7tvEmotes.json();
+                    kima7tvEmotes.forEach((emote)=>{
+                        if (emote.name in allEmotes) {
+                            allEmotes[emote.name].normalSize.src = emote.urls[0][1];
+                            allEmotes[emote.name].largeSize.src = emote.urls[1][1];
+                            allEmotes[emote.name].width = emote.width[0];
+                            allEmotes[emote.name].hasDoubleSize = emote.width[0] !== emote.width[1];
+                        } else {
+                            allEmotes[emote.name] = {
+                                normalSize: document.createElement("img"),
+                                largeSize: document.createElement("img"),
+                                hasDoubleSize: emote.width[0] !== emote.width[1],
+                                width: emote.width[0]
                             };
+                            allEmotes[emote.name].normalSize.src = emote.urls[0][1];
+                            allEmotes[emote.name].normalSize.className = "chatemote";
+                            allEmotes[emote.name].normalSize.alt = emote.name;
+                            allEmotes[emote.name].largeSize.src = emote.urls[1][1];
+                            allEmotes[emote.name].largeSize.className = "chatemote";
+                            allEmotes[emote.name].largeSize.alt = emote.name;
+                            $("hiddenemotes").appendChild(allEmotes[emote.name].normalSize);
+                            $("hiddenemotes").appendChild(allEmotes[emote.name].largeSize);
                         }
-                        connectToChat()
                     });
-                });
+                } catch (err) {
+                    console.log("Failed at kima7tvEmotes")
+                }
+                try {
+                    let nia7tvEmotes = await fetch('https://api.7tv.app/v2/users/niaarchangel/emotes');
+                    nia7tvEmotes = await nia7tvEmotes.json();
+                    nia7tvEmotes.forEach((emote)=>{
+                        if (emote.name in allEmotes) {
+                            allEmotes[emote.name].normalSize.src = emote.urls[0][1];
+                            allEmotes[emote.name].largeSize.src = emote.urls[1][1];
+                            allEmotes[emote.name].width = emote.width[0];
+                            allEmotes[emote.name].hasDoubleSize = emote.width[0] !== emote.width[1];
+                        } else {
+                            allEmotes[emote.name] = {
+                                normalSize: document.createElement("img"),
+                                largeSize: document.createElement("img"),
+                                hasDoubleSize: emote.width[0] !== emote.width[1],
+                                width: emote.width[0]
+                            };
+                            allEmotes[emote.name].normalSize.src = emote.urls[0][1];
+                            allEmotes[emote.name].normalSize.className = "chatemote";
+                            allEmotes[emote.name].normalSize.alt = emote.name;
+                            allEmotes[emote.name].largeSize.src = emote.urls[1][1];
+                            allEmotes[emote.name].largeSize.className = "chatemote";
+                            allEmotes[emote.name].largeSize.alt = emote.name;
+                            $("hiddenemotes").appendChild(allEmotes[emote.name].normalSize);
+                            $("hiddenemotes").appendChild(allEmotes[emote.name].largeSize);
+                        }
+                    });
+                } catch (err) {
+                    console.log("Failed at nia7tvEmotes")
+                }
+                function connectToChat() {
+                    let connection = new WebSocket(`wss://chat.api.restream.io/ws?accessToken=${access_token}`);
+                    connection.onmessage = (message) => {
+                        let messageData = JSON.parse(message.data);
+                        console.log(messageData);
+                        switch (messageData.action) {
+                            case "connection_info":
+                                connections[messageData.payload.connectionIdentifier] = {...messageData.payload, platform_type: platforms.find(platform=>messageData.payload.connectionIdentifier.includes(platform))};
+                                break;
+                            case "reply_created":
+                                newChatMessage(messageData.payload.text, "niaarchangel", "nia_icon.png", messageData.payload.connectionIdentifiers.length > 1 ? null : connections[messageData.payload.connectionIdentifiers[0]].platform_type);
+                                break;
+                            case "event":
+                                if (!messageData.payload.eventPayload.bot)
+                                    chatUserFilter(messageData.payload.eventPayload.text, messageData.payload.eventPayload.author.displayName, messageData.payload.eventPayload.author.avatar, connections[messageData.payload.connectionIdentifier].platform_type);
+                            case "heartbeat":
+                                if (heartbeatTimer) {
+                                    clearTimeout(heartbeatTimer);
+                                    heartbeatTimer = setTimeout(()=>{
+                                        heartbeatTimer = null
+                                        connection.close();
+                                        connectToChat();
+                                    }, 60000);
+                                }
+                                break;
+                            case "connection_closed":
+                                newChatMessage("Connection lost: " + messageData.payload.reason, "Nia Bot", "nia_bot_icon.png");
+                                break;
+                            default:
+                                break;
+                        }
+                    };
+                }
+                connectToChat();
             };
 
             if (access_token === null && (code === null || state !== sessionStorage.getItem("state")))
